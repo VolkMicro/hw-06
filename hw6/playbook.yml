@@ -1,0 +1,77 @@
+- name: Install Docker
+  hosts: app
+  become: yes
+  tasks:
+    - name: Update APT cache
+      apt:
+        update_cache: yes
+      when: ansible_distribution == 'Ubuntu'
+
+    - name: Install Docker
+      apt:
+        name: docker-ce
+        state: present
+      when: ansible_distribution == 'Ubuntu'
+
+
+- name: Install Docker on CentOS
+  hosts: app
+  become: yes
+  tasks:
+    - name: Install required packages
+      yum:
+        name:
+          - yum-utils
+          - device-mapper-persistent-data
+          - lvm2
+        state: present
+      when: ansible_distribution == 'CentOS'
+
+    - name: Add Docker CE stable repository
+      yum_repository:
+        name: docker-ce-stable
+        description: Docker CE Stable - $basearch
+        baseurl: https://download.docker.com/linux/centos/7/$basearch/stable
+        gpgkey: https://download.docker.com/linux/centos/gpg
+        enabled: yes
+      when: ansible_distribution == 'CentOS'
+
+    - name: Install Docker
+      package:
+        name: docker-ce
+        state: present
+      when: ansible_distribution == 'CentOS'
+
+    - name: Start Docker service
+      service:
+        name: docker
+        state: started
+      when: ansible_distribution == 'CentOS'
+
+- name: Install PostgreSQL
+  hosts: database
+  become: yes
+  tasks:
+    - name: Install PostgreSQL on Ubuntu
+      apt:
+        name: ["postgresql", "postgresql-contrib"]
+        state: present
+      when: ansible_distribution == 'Ubuntu' and ansible_pkg_mgr == 'apt'
+
+    - name: Install PostgreSQL on CentOS
+      yum:
+        name: "{{ postgres_version }}"
+        state: present
+      vars:
+        postgres_version: postgresql-server
+      when: ansible_distribution == 'CentOS' and ansible_pkg_mgr == 'yum'
+
+    - name: Start PostgreSQL service
+      service:
+        name: postgresql
+        state: started
+
+    - name: Ensure PostgreSQL service is enabled
+      service:
+        name: postgresql
+        enabled: yes

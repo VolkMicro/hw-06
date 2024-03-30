@@ -1,0 +1,9 @@
+[database]
+10.128.0.7 postgres_version="postgresql-server-12" data_directory="/var/lib/pgsql/12/data"
+
+
+[app]
+10.128.0.21
+10.128.0.34
+[web:children]
+database
